@@ -1,0 +1,2598 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Interview Trainer Agent — Powered by IBM Granite & RAG</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & Variables ─────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --font: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'IBM Plex Mono', monospace;
+      --font-display: 'Space Grotesk', 'Trebuchet MS', sans-serif;
+
+      --blue: #315d43;
+      --blue-hover: #264a35;
+      --blue-subtle: #e4ecdf;
+      --blue-border: #9db18f;
+      --cyan: #5c7955;
+      --purple: #8a6847;
+      --green: #46694a;
+      --green-subtle: #e4ecdf;
+      --green-border: #9db18f;
+      --amber: #8b6336;
+      --amber-subtle: #f1e7d5;
+      --red: #a33b2d;
+      --red-subtle: #f5e5de;
+
+      --bg: #eee8dc;
+      --bg-alt: #f5f0e5;
+      --surface: #faf7ef;
+      --surface-2: #e8e0d1;
+      --surface-hover: #ded4c2;
+      --border: #d3c7b3;
+      --border-strong: #917f66;
+      --text: #26372c;
+      --text-secondary: #4e5e4d;
+      --text-muted: #687365;
+      --header-bg: #183b2d;
+      --header-text: #f4efe3;
+      --earth: #b99a69;
+      --button-text: #ffffff;
+
+      --radius: 8px;
+      --radius-sm: 4px;
+      --radius-pill: 9999px;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.12);
+      --transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    [data-theme="dark"] {
+      --blue: #47704e;
+      --blue-hover: #365b3d;
+      --blue-subtle: rgba(146, 177, 132, 0.16);
+      --blue-border: rgba(173, 197, 154, 0.42);
+      --cyan: #91aa7f;
+      --purple: #76552f;
+      --green: #94b783;
+      --green-subtle: rgba(148, 183, 131, 0.16);
+      --green-border: rgba(148, 183, 131, 0.4);
+      --amber: #d0ad76;
+      --amber-subtle: rgba(208, 173, 118, 0.16);
+      --red: #e08c7b;
+      --red-subtle: rgba(224, 140, 123, 0.14);
+
+      --bg: #16251c;
+      --bg-alt: #1b2c21;
+      --surface: #20362a;
+      --surface-2: #293d30;
+      --surface-hover: #344a39;
+      --border: #435344;
+      --border-strong: #74816f;
+      --text: #f4efe3;
+      --text-secondary: #d4ddce;
+      --text-muted: #b2bfae;
+      --header-bg: #10251b;
+      --header-text: #f4efe3;
+      --earth: #d0ad76;
+      --button-text: #16251c;
+
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.5);
+    }
+
+    html { font-size: 16px; scroll-behavior: smooth; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+    [data-theme="dark"] body { background-color: var(--bg); color: var(--text); }
+    h1, h2, h3 { font-family: var(--font-display); font-weight: 700; text-transform: uppercase; letter-spacing: 0; line-height: 1.2; }
+    .card, .launch-card, .q-card, .studio-card, .star-step, .scorecard { border-radius: var(--radius); }
+
+    button, input, select, textarea { font-family: inherit; color: inherit; }
+    :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+    /* ── Header ───────────────────────────────────────────────────────────── */
+    .header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      height: 60px;
+      padding: 0 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 2px solid var(--earth);
+      box-shadow: var(--shadow-sm);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 600;
+      font-size: 1rem;
+      letter-spacing: 0;
+    }
+    .brand-logo {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: var(--earth);
+      color: var(--header-bg);
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+      box-shadow: none;
+    }
+    .brand-badge {
+      background: var(--blue-subtle);
+      border: 1px solid var(--blue);
+      color: var(--blue);
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 12px;
+      border-radius: var(--radius-pill);
+      font-size: 0.78rem;
+      font-weight: 500;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      transition: var(--transition);
+      color: #fff;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #8d8d8d;
+    }
+    .dot.live { background: #42be65; box-shadow: 0 0 8px #42be65; animation: pulse 2s infinite; }
+    .dot.sim { background: #f1c21b; }
+    .dot.offline { background: #fa4d56; }
+    @keyframes pulse { 50% { opacity: 0.5; } }
+
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .icon-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+      border-color: var(--blue);
+    }
+    .mobile-menu-toggle { display: none; }
+
+    /* ── App Layout ───────────────────────────────────────────────────────── */
+    .app {
+      display: grid;
+      grid-template-columns: 290px 1fr;
+      min-height: calc(100vh - 60px);
+    }
+
+    /* ── Sidebar ──────────────────────────────────────────────────────────── */
+    .sidebar {
+      background: var(--header-bg);
+      color: var(--header-text);
+      border-right: 1px solid var(--header-bg);
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      position: sticky;
+      top: 60px;
+      height: calc(100vh - 60px);
+      overflow-y: auto;
+    }
+    .profile-card {
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .profile-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+    .side-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0;
+      color: var(--header-text);
+    }
+    .sidebar .label { color: #e3e8dc; }
+    .sidebar .hint { color: #c4cfbf; }
+    .readiness-meter {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--blue);
+    }
+
+    /* ── Navigation ───────────────────────────────────────────────────────── */
+    .nav {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .nav-tab {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0.65rem 0.85rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #d5dfd1;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      text-align: left;
+      transition: var(--transition);
+      position: relative;
+    }
+    .nav-tab:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+    .nav-tab[aria-current="page"] {
+      background: var(--blue-subtle);
+      color: var(--blue);
+      font-weight: 600;
+    }
+    .nav-tab[aria-current="page"]::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 6px;
+      bottom: 6px;
+      width: 3px;
+      background: var(--blue);
+      border-radius: 2px;
+    }
+    .nav-badge {
+      margin-left: auto;
+      font-size: 0.7rem;
+      padding: 1px 6px;
+      border-radius: var(--radius-pill);
+      background: var(--border);
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .nav-badge.new {
+      background: var(--purple);
+      color: #fff;
+    }
+
+    /* ── Main Workspace ───────────────────────────────────────────────────── */
+    .main {
+      padding: 2rem;
+      min-width: 0;
+    }
+    .panel { display: none; }
+    .panel.active {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      max-width: 1040px;
+      animation: fadeIn 0.25s ease-out;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ── Form Controls ────────────────────────────────────────────────────── */
+    .field { margin-bottom: 1rem; }
+    .label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 0.4rem;
+    }
+    .hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem; }
+    .input, .select, .textarea {
+      width: 100%;
+      padding: 0.65rem 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 0.875rem;
+      color: var(--text);
+      background: var(--surface);
+      transition: var(--transition);
+    }
+    .input:focus, .select:focus, .textarea:focus {
+      outline: none;
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px var(--blue-subtle);
+    }
+    .input.invalid, .select.invalid { border-color: var(--red); }
+    .textarea { resize: vertical; min-height: 110px; line-height: 1.6; }
+
+    /* ── Buttons ──────────────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0.65rem 1.25rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+    .btn-primary { background: var(--blue); color: var(--button-text); }
+    .btn-primary:hover:not(:disabled) { background: var(--blue-hover); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+    .btn-primary:active:not(:disabled) { transform: translateY(0); }
+
+    .btn-success { background: var(--green); color: var(--button-text); }
+    .btn-success:hover:not(:disabled) { filter: brightness(1.1); }
+
+    .btn-outline { background: transparent; color: var(--blue); border-color: var(--blue); }
+    .btn-outline:hover:not(:disabled) { background: var(--blue-subtle); }
+
+    .btn-ghost { background: transparent; color: var(--text-secondary); border-color: var(--border); }
+    .btn-ghost:hover:not(:disabled) { background: var(--surface-hover); color: var(--text); border-color: var(--border-strong); }
+
+    .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.8rem; }
+    .btn-xs { padding: 0.2rem 0.5rem; font-size: 0.75rem; border-radius: 3px; }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn-block { width: 100%; }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid currentColor;
+      border-right-color: transparent;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Cards & Surfaces ─────────────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-sub {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-top: -0.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    /* ── Hero & Launchpad ─────────────────────────────────────────────────── */
+    .hero-banner {
+      background: var(--header-bg);
+      color: var(--header-text);
+      border-radius: var(--radius);
+      padding: 2.25rem;
+      border-left: 5px solid var(--earth);
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+    }
+    .hero-banner h1 {
+      font-size: 1.85rem;
+      font-weight: 700;
+      letter-spacing: 0;
+      margin-bottom: 0.6rem;
+    }
+    .hero-banner p {
+      font-size: 0.95rem;
+      color: rgba(255, 255, 255, 0.85);
+      max-width: 640px;
+      line-height: 1.7;
+    }
+    .hero-stats {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      margin-top: 1.5rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    .hero-stat {
+      display: flex;
+      flex-direction: column;
+    }
+    .hero-stat .val { font-size: 1.4rem; font-weight: 700; }
+    .hero-stat .lbl { font-size: 0.75rem; color: rgba(255, 255, 255, 0.7); text-transform: uppercase; }
+
+    .launchpad {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+    .launch-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      cursor: pointer;
+      text-align: left;
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .launch-card:hover {
+      border-color: var(--earth);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+    .launch-card:nth-child(odd) {
+      background: var(--header-bg);
+      border-color: var(--header-bg);
+      color: var(--header-text);
+    }
+    .launch-card:nth-child(odd) .launch-desc { color: rgba(244, 239, 227, 0.78); }
+    .launch-card:nth-child(odd) .launch-icon { background: rgba(255, 255, 255, 0.1); color: var(--earth); }
+    .launch-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: var(--blue-subtle);
+      color: var(--blue);
+      display: grid;
+      place-items: center;
+      font-size: 1.25rem;
+    }
+    .launch-title { font: 700 0.95rem/1.3 var(--font-display); text-transform: uppercase; letter-spacing: 0; }
+    .launch-desc { font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; }
+
+    /* ── Interactive Question Cards ───────────────────────────────────────── */
+    .filter-tabs {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      margin-bottom: 1rem;
+    }
+    .filter-btn {
+      padding: 0.4rem 0.85rem;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: var(--transition);
+    }
+    .filter-btn.active, .filter-btn:hover {
+      background: var(--blue);
+      color: var(--button-text);
+      border-color: var(--blue);
+    }
+
+    .q-list { display: flex; flex-direction: column; gap: 0.85rem; }
+    .q-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      transition: var(--transition);
+      position: relative;
+    }
+    .q-card:hover { border-color: var(--border-strong); }
+    .q-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 0.5rem;
+    }
+    .q-cat {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      background: var(--blue-subtle);
+      color: var(--blue);
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+    .q-cat.behavioral { background: var(--green-subtle); color: var(--green); }
+    .q-cat.hr { background: var(--amber-subtle); color: var(--amber); }
+    .q-text { font-size: 0.95rem; font-weight: 600; line-height: 1.5; margin-bottom: 0.75rem; }
+    .q-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+    /* ── Mock Interview Simulator Studio ──────────────────────────────────── */
+    .studio-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .studio-header {
+      background: var(--surface-2);
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .studio-timer {
+      font-family: var(--font-mono);
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--blue);
+      background: var(--blue-subtle);
+      padding: 4px 12px;
+      border-radius: var(--radius-pill);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .studio-body { padding: 1.5rem; }
+    .interviewer-bubble {
+      background: var(--surface-2);
+      border-left: 4px solid var(--blue);
+      padding: 1rem 1.25rem;
+      border-radius: var(--radius-sm);
+      margin-bottom: 1.25rem;
+    }
+    .interviewer-who {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0;
+      color: var(--blue);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .interviewer-q { font-size: 1.05rem; font-weight: 600; line-height: 1.5; }
+
+    .mic-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .mic-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-pill);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      transition: var(--transition);
+    }
+    .mic-btn:hover { border-color: var(--blue); color: var(--blue); }
+    .mic-btn.recording {
+      background: var(--red);
+      color: #fff;
+      border-color: var(--red);
+      animation: pulse 1.5s infinite;
+    }
+
+    /* ── AI Scorecard ─────────────────────────────────────────────────────── */
+    .scorecard {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-top: 1rem;
+    }
+    .score-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: var(--radius-pill);
+      font-size: 1.2rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      margin-bottom: 1rem;
+    }
+    .score-badge.high { background: var(--green-subtle); color: var(--green); border: 1px solid var(--green-border); }
+    .score-badge.mid { background: var(--amber-subtle); color: var(--amber); }
+    .score-badge.low { background: var(--red-subtle); color: var(--red); }
+
+    /* ── STAR Builder Grid ────────────────────────────────────────────────── */
+    .star-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+    .star-step {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      position: relative;
+    }
+    .star-letter {
+      position: absolute;
+      top: 10px;
+      right: 14px;
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--border);
+      pointer-events: none;
+    }
+    .star-step-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--blue);
+      margin-bottom: 0.25rem;
+    }
+    .star-step-hint {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-bottom: 0.6rem;
+      line-height: 1.4;
+    }
+
+    /* ── Rendered Response ────────────────────────────────────────────────── */
+    .response {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      font-size: 0.92rem;
+      line-height: 1.8;
+      word-break: break-word;
+    }
+    .response h2 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--blue);
+      margin: 1.4rem 0 0.5rem;
+      padding-bottom: 4px;
+      border-bottom: 2px solid var(--blue-subtle);
+    }
+    .response h2:first-child { margin-top: 0; }
+    .response h3 { font-size: 0.95rem; font-weight: 700; margin: 1rem 0 0.4rem; }
+    .response p { margin-bottom: 0.8rem; }
+    .response ul, .response ol { padding-left: 1.5rem; margin: 0.5rem 0 1rem; }
+    .response li { margin-bottom: 0.5rem; }
+    .response code {
+      font-family: var(--font-mono);
+      font-size: 0.85em;
+      background: rgba(0, 0, 0, 0.08);
+      padding: 2px 5px;
+      border-radius: 4px;
+    }
+    [data-theme="dark"] .response code {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* ── Sources & Tags ───────────────────────────────────────────────────── */
+    .sources {
+      margin-top: 1rem;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+    }
+    .chip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      padding: 2px 10px;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+    .tag {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: var(--radius-pill);
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: var(--blue-subtle);
+      color: var(--blue);
+    }
+    .tag.ready { background: var(--green-subtle); color: var(--green); }
+
+    /* ── Alerts & Notifications ───────────────────────────────────────────── */
+    .alert {
+      padding: 0.85rem 1.25rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.875rem;
+      border-left: 4px solid;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .alert-error { background: var(--red-subtle); border-color: var(--red); color: var(--text); }
+    .alert-success { background: var(--green-subtle); border-color: var(--green); color: var(--text); }
+    .alert-info { background: var(--blue-subtle); border-color: var(--blue); color: var(--text); }
+    .alert[hidden] { display: none; }
+
+    /* ── Chat Coach ───────────────────────────────────────────────────────── */
+    .chat-card { padding: 0; overflow: hidden; }
+    .chat-top {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .chat-box {
+      display: flex;
+      flex-direction: column;
+      height: clamp(450px, calc(100vh - 280px), 720px);
+    }
+    .chat-log {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.25rem;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .msg {
+      max-width: 82%;
+      padding: 0.85rem 1.25rem;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      line-height: 1.65;
+      position: relative;
+    }
+    .msg.user {
+      align-self: flex-end;
+      background: var(--blue);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+      white-space: pre-wrap;
+    }
+    .msg.assistant {
+      align-self: flex-start;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 4px;
+      box-shadow: var(--shadow-sm);
+    }
+    .msg .who {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--blue);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .chat-input-row {
+      display: flex;
+      gap: 10px;
+      padding: 0.85rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .chat-input {
+      flex: 1;
+      padding: 0.7rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 0.875rem;
+      background: var(--surface-2);
+      color: var(--text);
+      resize: none;
+      min-height: 44px;
+      max-height: 140px;
+    }
+    .chat-input:focus { outline: none; border-color: var(--blue); }
+
+    /* ── Dropzone & Upload ────────────────────────────────────────────────── */
+    .dropzone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 2.25rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: var(--transition);
+      background: var(--surface-2);
+    }
+    .dropzone:hover, .dropzone.drag {
+      border-color: var(--blue);
+      background: var(--blue-subtle);
+      color: var(--blue);
+    }
+    .dropzone .icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+
+    /* ── Responsive ───────────────────────────────────────────────────────── */
+    @media (max-width: 960px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar {
+        position: fixed;
+        left: -100%;
+        top: 60px;
+        width: 290px;
+        z-index: 90;
+        transition: left 0.25s ease;
+        box-shadow: var(--shadow-lg);
+      }
+      .sidebar.open { left: 0; }
+      .mobile-menu-toggle { display: grid; }
+      .main { padding: 1.25rem; }
+      .msg { max-width: 95%; }
+    }
+    @media (max-width: 520px) {
+      .header { padding: 0 0.75rem; }
+      .brand { gap: 7px; font-size: 0.82rem; }
+      .brand-badge { display: none; }
+      .header-actions { gap: 6px; }
+      .status-pill { gap: 0; padding: 5px 7px; }
+      .status-pill #conn-text { display: none; }
+      .icon-btn { width: 34px; height: 34px; }
+      .main { padding: 1rem 0.75rem; }
+      .hero-banner { padding: 1.5rem; }
+      .hero-banner h1 { font-size: 1.45rem; }
+      .card, .studio-body, .scorecard { padding: 1rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+
+<noscript><p style="padding:1rem">This app requires JavaScript to run.</p></noscript>
+
+<!-- ── Header ───────────────────────────────────────────────────────────── -->
+<header class="header">
+  <div style="display: flex; align-items: center; gap: 10px;">
+    <button class="icon-btn mobile-menu-toggle" id="btn-toggle-menu" aria-label="Toggle navigation">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+    </button>
+    <div class="brand">
+      <div class="brand-logo">ITA</div>
+      <span>Interview Trainer Agent</span>
+      <span class="brand-badge">Granite AI</span>
+    </div>
+  </div>
+
+  <div class="header-actions">
+    <div class="status-pill" id="engine-status" role="status">
+      <span class="dot" id="conn-dot"></span>
+      <span id="conn-text">Checking engine...</span>
+    </div>
+
+    <!-- Theme Toggle -->
+    <button class="icon-btn" id="btn-theme-toggle" title="Toggle Light/Dark Theme" aria-label="Toggle Theme">
+      <svg id="theme-icon-dark" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+      <svg id="theme-icon-light" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+    </button>
+
+  </div>
+</header>
+
+<div class="app">
+
+  <!-- ── Sidebar ─────────────────────────────────────────────────────────── -->
+  <aside class="sidebar" id="sidebar">
+    <!-- Candidate Profile Section -->
+    <section class="profile-card">
+      <div class="profile-head">
+        <h2 class="side-title">Your Profile</h2>
+        <span class="readiness-meter" id="profile-status">Incomplete</span>
+      </div>
+      <div class="field" style="margin-bottom:0.6rem;">
+        <label class="label" for="inp-name">Full name</label>
+        <input type="text" id="inp-name" class="input" placeholder="e.g. Sarah Jenkins" autocomplete="name" maxlength="80" />
+      </div>
+      <div class="field" style="margin-bottom:0.6rem;">
+        <label class="label" for="inp-role">Target role</label>
+        <input type="text" id="inp-role" class="input" placeholder="e.g. Senior Software Engineer" maxlength="100" />
+      </div>
+      <div class="field" style="margin-bottom:0.25rem;">
+        <label class="label" for="inp-level">Experience level</label>
+        <select id="inp-level" class="select">
+          <option value="">Select level</option>
+          <option value="Fresher">Fresher (0–1 yr)</option>
+          <option value="Junior">Junior (1–3 yrs)</option>
+          <option value="Mid-Level">Mid-Level (3–6 yrs)</option>
+          <option value="Senior">Senior (6–10 yrs)</option>
+          <option value="Lead">Lead / Principal (10+ yrs)</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- Navigation Menu -->
+    <nav class="nav" id="nav">
+      <button class="nav-tab" data-panel="home">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        Dashboard
+      </button>
+
+      <button class="nav-tab" data-panel="questions">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        Question Set
+      </button>
+
+      <button class="nav-tab" data-panel="answer">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6"></path><path d="M10 22h4"></path><path d="M12 2v1"></path><path d="M12 8a4 4 0 0 0-4 4c0 1.5.8 2.8 2 3.4V17h4v-1.6c1.2-.6 2-1.9 2-3.4a4 4 0 0 0-4-4z"></path></svg>
+        Model Answer
+      </button>
+
+      <button class="nav-tab" data-panel="mock">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+        Mock Simulator
+        <span class="nav-badge new">AI Voice</span>
+      </button>
+
+      <button class="nav-tab" data-panel="star">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+        STAR Builder
+        <span class="nav-badge new">Tool</span>
+      </button>
+
+      <button class="nav-tab" data-panel="resume">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        Resume Analyzer
+      </button>
+
+      <button class="nav-tab" data-panel="chat">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        Chat Coach
+      </button>
+
+      <button class="nav-tab" data-panel="deck">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+        Study Deck
+        <span class="nav-badge" id="deck-count-badge">0</span>
+      </button>
+
+      <button class="nav-tab" data-panel="upload">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+        Knowledge Base
+      </button>
+    </nav>
+  </aside>
+
+  <!-- ── Main Workspace ───────────────────────────────────────────────────── -->
+  <main class="main" id="main">
+
+    <!-- 1. DASHBOARD PANEL -->
+    <section id="panel-home" class="panel">
+      <div class="hero-banner">
+        <h1>Ace Your Next Interview</h1>
+        <p>Your personalized AI-driven interview coach powered by IBM Granite and Retrieval-Augmented Generation (RAG). Practice tailored questions, run voice mock interviews, and master the STAR method.</p>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <span class="val" id="stat-role">—</span>
+            <span class="lbl">Target Role</span>
+          </div>
+          <div class="hero-stat">
+            <span class="val" id="stat-level">—</span>
+            <span class="lbl">Experience Level</span>
+          </div>
+          <div class="hero-stat">
+            <span class="val" id="stat-saved">0</span>
+            <span class="lbl">Saved in Deck</span>
+          </div>
+          <div class="hero-stat">
+            <span class="val" id="stat-docs">2</span>
+            <span class="lbl">Indexed Docs</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="launchpad">
+        <div class="launch-card" data-go="questions">
+          <div class="launch-icon">❓</div>
+          <div class="launch-title">Question Set Generator</div>
+          <div class="launch-desc">Generate technical, behavioral (STAR), and HR questions tuned to your profile.</div>
+        </div>
+
+        <div class="launch-card" data-go="mock">
+          <div class="launch-icon">🎙️</div>
+          <div class="launch-title">Mock Interview Studio</div>
+          <div class="launch-desc">Practice answering under timed pressure with Speech-to-Text and instant AI evaluation.</div>
+        </div>
+
+        <div class="launch-card" data-go="star">
+          <div class="launch-icon">⭐</div>
+          <div class="launch-title">STAR Story Builder</div>
+          <div class="launch-desc">Structure behavioral stories with high-impact action verbs and quantified results.</div>
+        </div>
+
+        <div class="launch-card" data-go="resume">
+          <div class="launch-icon">📄</div>
+          <div class="launch-title">Resume & Gap Analysis</div>
+          <div class="launch-desc">Upload your resume to uncover strengths, skill gaps, and a 30-day prep plan.</div>
+        </div>
+
+        <div class="launch-card" data-go="chat">
+          <div class="launch-icon">💬</div>
+          <div class="launch-title">Live Chat Coach</div>
+          <div class="launch-desc">Ask salary negotiation tips, tricky questions, or practice grilling roleplay.</div>
+        </div>
+
+        <div class="launch-card" data-go="upload">
+          <div class="launch-icon">📚</div>
+          <div class="launch-title">RAG Knowledge Base</div>
+          <div class="launch-desc">Upload PDFs and company guides; test semantic keyword search retrieval live.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. QUESTION SET PANEL -->
+    <section id="panel-questions" class="panel">
+      <div class="card">
+        <h2 class="card-title">Generate Tailored Interview Questions</h2>
+        <p class="card-sub">Technical, behavioral, and cultural questions aligned with your role and level.</p>
+        <div class="field">
+          <label class="label" for="q-background">Additional Background / Focus Areas (optional)</label>
+          <textarea id="q-background" class="textarea" rows="3" maxlength="2000" placeholder="e.g. 4 years of Python & React. Strong focus on microservices, PostgreSQL, and AWS deployment. Targeting FinTech companies."></textarea>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+          <span id="q-profile-tag" class="tag">Complete profile in sidebar</span>
+          <button class="btn btn-primary" id="btn-q">Generate Question Package</button>
+        </div>
+      </div>
+
+      <div id="q-alert" class="alert" role="alert" hidden></div>
+
+      <div id="q-result" class="card" hidden>
+        <div class="card-header">
+          <h2 class="card-title">Generated Question Package</h2>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost btn-sm" id="btn-copy-q">Copy All</button>
+            <button class="btn btn-ghost btn-sm" id="btn-download-q">Download</button>
+          </div>
+        </div>
+
+        <div class="filter-tabs" id="q-filter-tabs">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="technical">Technical (5)</button>
+          <button class="filter-btn" data-filter="behavioral">Behavioral STAR (5)</button>
+          <button class="filter-btn" data-filter="hr">HR & Culture (3)</button>
+          <button class="filter-btn" data-filter="strategy">Prep Strategy (3)</button>
+        </div>
+
+        <div id="q-interactive-container" class="q-list"></div>
+        <div id="q-sources" class="sources"></div>
+      </div>
+    </section>
+
+    <!-- 3. MODEL ANSWER PANEL -->
+    <section id="panel-answer" class="panel">
+      <div class="card">
+        <h2 class="card-title">Model Answer Generator</h2>
+        <p class="card-sub">Generate a structured model answer, key points, mistakes to avoid, and delivery tips.</p>
+        <div class="field">
+          <label class="label" for="a-question">Interview Question</label>
+          <textarea id="a-question" class="textarea" rows="3" maxlength="1000" placeholder="e.g. Explain how indexing works in relational databases and how B-Trees optimize read queries."></textarea>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+          <button class="btn btn-primary" id="btn-a">Generate Model Answer</button>
+          <button class="btn btn-ghost btn-sm" id="btn-a-sample1">Sample Tech Q</button>
+          <button class="btn btn-ghost btn-sm" id="btn-a-sample2">Sample STAR Q</button>
+        </div>
+      </div>
+
+      <div id="a-alert" class="alert" role="alert" hidden></div>
+
+      <div id="a-result" class="card" hidden>
+        <div class="card-header">
+          <h2 class="card-title">Expert Model Answer</h2>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-outline btn-sm" id="btn-tts-answer" title="Read answer out loud">🔊 Listen (TTS)</button>
+            <button class="btn btn-ghost btn-sm" id="btn-copy-a">Copy</button>
+            <button class="btn btn-ghost btn-sm" id="btn-download-a">Download</button>
+            <button class="btn btn-primary btn-sm" id="btn-test-in-mock">Test Myself in Mock</button>
+          </div>
+        </div>
+        <div id="a-response" class="response"></div>
+        <div id="a-sources" class="sources"></div>
+      </div>
+    </section>
+
+    <!-- 4. MOCK INTERVIEW SIMULATOR PANEL (NEW MAJOR FEATURE) -->
+    <section id="panel-mock" class="panel">
+      <div class="card">
+        <h2 class="card-title">Mock Interview Studio</h2>
+        <p class="card-sub">Practice answering interview questions under realistic timed conditions with speech or text.</p>
+        <div class="field">
+          <label class="label" for="mock-q-input">Question to Practice</label>
+          <textarea id="mock-q-input" class="textarea" rows="2" placeholder="Enter a question, or pick from your generated questions."></textarea>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <button class="btn btn-outline btn-sm" id="btn-mock-random">Pick Random Challenge</button>
+          <button class="btn btn-outline btn-sm" id="btn-mock-from-gen">Load from Generated Set</button>
+        </div>
+      </div>
+
+      <!-- Studio Session Box -->
+      <div class="studio-card" id="mock-studio">
+        <div class="studio-header">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span class="tag">Simulated Round</span>
+            <span style="font-size:0.85rem;color:var(--text-secondary);" id="mock-interviewer-label">AI Interviewer</span>
+          </div>
+          <div class="studio-timer" id="mock-timer">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            <span id="timer-display">00:00</span>
+          </div>
+        </div>
+
+        <div class="studio-body">
+          <div class="interviewer-bubble">
+            <div class="interviewer-who">
+              <span>Interviewer Asks:</span>
+              <button class="btn btn-ghost btn-xs" id="btn-tts-mock-q">🔊 Read Question</button>
+            </div>
+            <div class="interviewer-q" id="mock-displayed-q">Describe a time you solved a complex production bug under high pressure.</div>
+          </div>
+
+          <div class="field" style="margin-bottom:0.5rem;">
+            <label class="label" for="mock-answer-text">
+              <span>Your Spoken or Typed Response</span>
+              <span id="mock-word-count" style="font-weight:normal;font-size:0.75rem;color:var(--text-muted);">0 words</span>
+            </label>
+            <textarea id="mock-answer-text" class="textarea" rows="6" placeholder="Click the microphone to speak your answer, or type it here. Include your Situation, Task, Action, and Result..."></textarea>
+          </div>
+
+          <div class="mic-toolbar">
+            <button class="mic-btn" id="btn-mic-toggle">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+              <span id="mic-text">Click to Speak (Speech-to-Text)</span>
+            </button>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-ghost btn-sm" id="btn-timer-toggle">Pause Timer</button>
+              <button class="btn btn-primary" id="btn-eval-answer">Submit for AI Evaluation</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="mock-alert" class="alert" role="alert" hidden></div>
+
+      <!-- AI Scorecard Result -->
+      <div id="mock-result-card" class="card" hidden>
+        <div class="card-header">
+          <h2 class="card-title">Interview Performance Evaluation</h2>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost btn-sm" id="btn-copy-mock-eval">Copy Feedback</button>
+            <button class="btn btn-outline btn-sm" id="btn-save-mock-q">Save Question to Deck</button>
+          </div>
+        </div>
+        <div id="mock-score-banner"></div>
+        <div id="mock-eval-response" class="response"></div>
+      </div>
+    </section>
+
+    <!-- 5. STAR STORY BUILDER PANEL (NEW FEATURE) -->
+    <section id="panel-star" class="panel">
+      <div class="card">
+        <h2 class="card-title">STAR Story Builder & Polish Tool</h2>
+        <p class="card-sub">Frame behavioral interview answers with the proven STAR methodology (Situation, Task, Action, Result).</p>
+
+        <div class="star-grid">
+          <div class="star-step">
+            <span class="star-letter">S</span>
+            <div class="star-step-title">Situation</div>
+            <div class="star-step-hint">Set the context. What company/project, what was the crisis or challenge?</div>
+            <textarea id="star-s" class="textarea" rows="4" placeholder="e.g. During Black Friday at my previous e-commerce firm, our checkout service experienced a sudden 5x traffic surge..."></textarea>
+          </div>
+
+          <div class="star-step">
+            <span class="star-letter">T</span>
+            <div class="star-step-title">Task</div>
+            <div class="star-step-hint">What was your specific ownership and goal? What was at stake?</div>
+            <textarea id="star-t" class="textarea" rows="4" placeholder="e.g. As the backend tech lead, my goal was to restore checkout response times below 300ms without dropping orders..."></textarea>
+          </div>
+
+          <div class="star-step">
+            <span class="star-letter">A</span>
+            <div class="star-step-title">Action</div>
+            <div class="star-step-hint">What specific actions did YOU lead? Use active verbs ('I profiled', 'I architected').</div>
+            <textarea id="star-a" class="textarea" rows="4" placeholder="e.g. I isolated the database deadlock, deployed an emergency Redis cache for inventory lookups, and enabled rate limiting..."></textarea>
+          </div>
+
+          <div class="star-step">
+            <span class="star-letter">R</span>
+            <div class="star-step-title">Result</div>
+            <div class="star-step-hint">What was the quantifiable outcome? Include metrics, percentages, and lessons learned.</div>
+            <textarea id="star-r" class="textarea" rows="4" placeholder="e.g. Latency dropped to 140ms, 100% of orders completed successfully, and we saved $80k in lost sales..."></textarea>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+          <button class="btn btn-ghost btn-sm" id="btn-star-sample">Load Example Story</button>
+          <button class="btn btn-primary" id="btn-star-critique">Analyze & Polish My Story</button>
+        </div>
+      </div>
+
+      <div id="star-alert" class="alert" role="alert" hidden></div>
+
+      <div id="star-result" class="card" hidden>
+        <div class="card-header">
+          <h2 class="card-title">Critique & Polished Story</h2>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-outline btn-sm" id="btn-tts-star">🔊 Listen</button>
+            <button class="btn btn-ghost btn-sm" id="btn-copy-star">Copy Polished Story</button>
+          </div>
+        </div>
+        <div id="star-response" class="response"></div>
+      </div>
+    </section>
+
+    <!-- 6. RESUME ANALYSIS PANEL -->
+    <section id="panel-resume" class="panel">
+      <div class="card">
+        <h2 class="card-title">Resume & Background Analysis</h2>
+        <p class="card-sub">Identify interview strengths, critical skill gaps, predicted questions, and a 30-day prep plan.</p>
+
+        <div class="dropzone" id="resume-dropzone" style="margin-bottom:1rem;padding:1.5rem;">
+          <div style="font-size:1.8rem;margin-bottom:4px;">📄</div>
+          <strong>Drop your Resume File here (.pdf, .docx, .txt)</strong>
+          <div style="font-size:0.78rem;color:var(--text-muted);margin-top:4px;">or click to upload and automatically extract text</div>
+          <input type="file" id="resume-file-input" hidden accept=".pdf,.docx,.txt" />
+        </div>
+
+        <div class="field">
+          <label class="label" for="r-resume">
+            <span>Resume Text</span>
+            <span id="r-count" style="font-size:0.75rem;color:var(--text-muted);font-weight:normal;">0 characters (min 50)</span>
+          </label>
+          <textarea id="r-resume" class="textarea" rows="8" maxlength="12000" placeholder="Paste your resume or upload a file above. Include summary, technical skills, projects, and work history."></textarea>
+        </div>
+
+        <button class="btn btn-primary" id="btn-r">Analyze Resume for Target Role</button>
+      </div>
+
+      <div id="r-alert" class="alert" role="alert" hidden></div>
+
+      <div id="r-result" class="card" hidden>
+        <div class="card-header">
+          <h2 class="card-title">Interview Readiness Assessment</h2>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost btn-sm" id="btn-copy-r">Copy</button>
+            <button class="btn btn-ghost btn-sm" id="btn-download-r">Download</button>
+          </div>
+        </div>
+        <div id="r-response" class="response"></div>
+        <div id="r-sources" class="sources"></div>
+      </div>
+    </section>
+
+    <!-- 7. CHAT COACH PANEL -->
+    <section id="panel-chat" class="panel">
+      <div class="card chat-card">
+        <div class="chat-top">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <h2 class="card-title" style="margin:0;">Conversational Interview Coach</h2>
+            <span class="tag">Powered by IBM Granite</span>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost btn-sm" id="btn-export-chat">Export Chat</button>
+            <button class="btn btn-ghost btn-sm" id="btn-clear-chat">Clear Chat</button>
+          </div>
+        </div>
+
+        <div class="chat-box">
+          <div class="chat-log" id="chat-log" aria-live="polite"></div>
+          <div class="chat-input-row">
+            <textarea class="chat-input" id="chat-input" rows="1" maxlength="2000" placeholder="Ask about salary negotiation, STAR examples, or practice a question... (Enter to send)"></textarea>
+            <button class="icon-btn" id="btn-chat-mic" title="Voice Input" style="border-radius:var(--radius-sm);background:var(--surface-2);color:var(--text);border-color:var(--border);">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+            </button>
+            <button class="btn btn-primary" id="chat-send">Send</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. STUDY DECK / SAVED QUESTIONS PANEL (NEW FEATURE) -->
+    <section id="panel-deck" class="panel">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Saved Study Deck</h2>
+            <p class="card-sub" style="margin:0;">Review your bookmarked questions and flashcards before your interview.</p>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost btn-sm" id="btn-export-deck">Export Deck</button>
+            <button class="btn btn-ghost btn-sm" id="btn-clear-deck">Clear All</button>
+          </div>
+        </div>
+        <div id="deck-container" class="q-list"></div>
+      </div>
+    </section>
+
+    <!-- 9. KNOWLEDGE BASE & RAG SEARCH PANEL -->
+    <section id="panel-upload" class="panel">
+      <div class="card">
+        <h2 class="card-title">Knowledge Base & RAG Ingestion</h2>
+        <p class="card-sub">Upload interview guides, company playbooks, or technical cheat sheets (.pdf, .txt, .json up to 10 MB).</p>
+
+        <div class="dropzone" id="dropzone" role="button" tabindex="0">
+          <div class="icon">📁</div>
+          <strong>Select a document or drag and drop here</strong>
+          <div style="font-size:0.8rem;color:var(--text-muted);margin-top:4px;">Supported: PDF, TXT, JSON</div>
+        </div>
+        <input type="file" id="file-input" hidden accept=".pdf,.txt,.json" />
+        <div id="upload-alert" class="alert" role="alert" hidden style="margin-top:1rem;"></div>
+      </div>
+
+      <!-- Indexed Documents Table -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Indexed Knowledge Base Documents</h2>
+          <button class="btn btn-outline btn-sm" id="btn-rebuild">Rebuild Index</button>
+        </div>
+        <div id="rebuild-alert" class="alert" role="alert" hidden></div>
+        <div id="kb-table-container">Loading knowledge base...</div>
+      </div>
+
+      <!-- Live RAG Search Tester -->
+      <div class="card">
+        <h2 class="card-title">Interactive RAG Retrieval Tester</h2>
+        <p class="card-sub">Test keyword & semantic chunk matching in real time to inspect what Granite sees.</p>
+        <div style="display:flex;gap:10px;margin-bottom:1rem;">
+          <input type="text" id="kb-search-input" class="input" placeholder="e.g. STAR method, system design, binary search, salary..." />
+          <button class="btn btn-primary" id="btn-kb-search">Search Chunks</button>
+        </div>
+        <div id="kb-search-results"></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ── Config & State ─────────────────────────────────────────────────────────
+  const API = '/api/v1';
+  const PANELS = ['home', 'questions', 'answer', 'mock', 'star', 'resume', 'chat', 'deck', 'upload'];
+
+  const $ = (id) => document.getElementById(id);
+  const raw = {};
+
+  const store = {
+    get(k, fb) {
+      try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; }
+      catch { return fb; }
+    },
+    set(k, v) {
+      try { localStorage.setItem(k, JSON.stringify(v)); } catch {}
+    },
+  };
+
+  let generatedQuestionsList = [];
+  let currentFilter = 'all';
+  let savedDeck = store.get('ita.deck', []);
+  let chatHistory = store.get('ita.chat', []);
+  let isRecording = false;
+  let recognition = null;
+  let timerInterval = null;
+  let timerSeconds = 0;
+  let isTimerRunning = false;
+
+  // ── Theme Management ───────────────────────────────────────────────────────
+  function initTheme() {
+    const saved = store.get('ita.theme', 'light');
+    document.documentElement.setAttribute('data-theme', saved);
+    updateThemeIcon(saved);
+  }
+
+  function updateThemeIcon(t) {
+    $('theme-icon-dark').style.display = t === 'dark' ? 'none' : 'block';
+    $('theme-icon-light').style.display = t === 'dark' ? 'block' : 'none';
+  }
+
+  $('btn-theme-toggle').addEventListener('click', () => {
+    const curr = document.documentElement.getAttribute('data-theme');
+    const next = curr === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    store.set('ita.theme', next);
+    updateThemeIcon(next);
+  });
+
+  // ── API Client ─────────────────────────────────────────────────────────────
+  async function api(path, { method = 'POST', json, form, timeout = 120000 } = {}) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), timeout);
+    try {
+      const opts = { method, signal: ctrl.signal };
+      if (json) { opts.headers = { 'Content-Type': 'application/json' }; opts.body = JSON.stringify(json); }
+      if (form) opts.body = form;
+      const resp = await fetch(API + path, opts);
+      let data = null;
+      try { data = await resp.json(); } catch {}
+      if (!resp.ok) {
+        const msg = data && data.detail ? (typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail)) : `Request failed (${resp.status})`;
+        throw new Error(msg);
+      }
+      return data;
+    } catch (e) {
+      if (e.name === 'AbortError') throw new Error('Request timed out. Please try again.');
+      throw e;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  // ── Safe Markdown Renderer ─────────────────────────────────────────────────
+  function inline(parent, text) {
+    text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).forEach((part) => {
+      if (!part) return;
+      if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
+        const s = document.createElement('strong');
+        s.textContent = part.slice(2, -2);
+        parent.appendChild(s);
+      } else if (part.startsWith('`') && part.endsWith('`') && part.length > 2) {
+        const c = document.createElement('code');
+        c.textContent = part.slice(1, -1);
+        parent.appendChild(c);
+      } else {
+        parent.appendChild(document.createTextNode(part));
+      }
+    });
+  }
+
+  function renderMarkdown(target, text) {
+    target.replaceChildren();
+    let list = null;
+    let listType = null;
+
+    const closeList = () => { list = null; listType = null; };
+
+    String(text || '').split(/\r?\n/).forEach((line) => {
+      const trimmed = line.trim();
+      if (!trimmed) { closeList(); return; }
+
+      const heading = trimmed.match(/^#{1,4}\s+(.*)$/);
+      if (heading) {
+        closeList();
+        const level = trimmed.startsWith('###') ? 'h3' : 'h2';
+        const h = document.createElement(level);
+        inline(h, heading[1].replace(/\*\*/g, ''));
+        target.appendChild(h);
+        return;
+      }
+
+      const item = trimmed.match(/^(?:(\d+)[.)]|[-*•])\s+(.*)$/);
+      if (item) {
+        const type = item[1] ? 'ol' : 'ul';
+        if (!list || listType !== type) {
+          list = document.createElement(type);
+          listType = type;
+          target.appendChild(list);
+        }
+        const li = document.createElement('li');
+        inline(li, item[2]);
+        list.appendChild(li);
+        return;
+      }
+
+      closeList();
+      const p = document.createElement('p');
+      inline(p, trimmed);
+      target.appendChild(p);
+    });
+  }
+
+  // ── UI Helpers ─────────────────────────────────────────────────────────────
+  function showAlert(id, type, msg) {
+    const el = $(id);
+    el.className = `alert alert-${type}`;
+    el.textContent = msg;
+    el.hidden = false;
+  }
+  function hideAlert(id) { const el = $(id); el.hidden = true; el.textContent = ''; }
+
+  function setBusy(btn, busy, text = 'Working...') {
+    if (busy) {
+      if (!btn.dataset.label) btn.dataset.label = btn.textContent;
+      btn.disabled = true;
+      btn.replaceChildren();
+      const sp = document.createElement('span');
+      sp.className = 'spinner';
+      btn.append(sp, document.createTextNode(' ' + text));
+    } else {
+      btn.disabled = false;
+      btn.textContent = btn.dataset.label || btn.textContent;
+      delete btn.dataset.label;
+    }
+  }
+
+  function renderSources(id, sources) {
+    const el = $(id);
+    el.replaceChildren();
+    if (!sources || !sources.length) return;
+    el.append('Retrieved context grounded in: ');
+    const seen = new Set();
+    sources.forEach((s) => {
+      const name = String(s.source || '').split(/[\\/]/).pop();
+      if (!name || seen.has(name)) return;
+      seen.add(name);
+      const chip = document.createElement('span');
+      chip.className = 'chip';
+      chip.textContent = name;
+      el.appendChild(chip);
+    });
+  }
+
+  // ── Text-to-Speech (TTS) ───────────────────────────────────────────────────
+  function speakText(text) {
+    if (!('speechSynthesis' in window)) {
+      alert('Speech synthesis is not supported in this browser.');
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const cleanText = text.replace(/#+|\*+|`+/g, '').replace(/\[.*?\]/g, '');
+    const utter = new SpeechSynthesisUtterance(cleanText);
+    utter.rate = 1.0;
+    utter.pitch = 1.0;
+    window.speechSynthesis.speak(utter);
+  }
+
+  // ── Speech-to-Text (STT) ───────────────────────────────────────────────────
+  function initSpeechRecognition(targetTextarea, micBtn, micTextEl) {
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRec) {
+      micBtn.style.display = 'none';
+      return null;
+    }
+
+    const rec = new SpeechRec();
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.lang = 'en-US';
+
+    rec.onstart = () => {
+      isRecording = true;
+      micBtn.classList.add('recording');
+      if (micTextEl) micTextEl.textContent = 'Listening... (Click to stop)';
+    };
+
+    rec.onresult = (event) => {
+      let interim = '';
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          targetTextarea.value += (targetTextarea.value ? ' ' : '') + event.results[i][0].transcript;
+        } else {
+          interim += event.results[i][0].transcript;
+        }
+      }
+      targetTextarea.dispatchEvent(new Event('input'));
+    };
+
+    rec.onerror = (e) => {
+      console.warn('Speech recognition error:', e.error);
+      stopRecording(micBtn, micTextEl);
+    };
+
+    rec.onend = () => {
+      stopRecording(micBtn, micTextEl);
+    };
+
+    return rec;
+  }
+
+  function stopRecording(micBtn, micTextEl) {
+    isRecording = false;
+    micBtn.classList.remove('recording');
+    if (micTextEl) micTextEl.textContent = 'Click to Speak (Speech-to-Text)';
+  }
+
+  // ── Profile ────────────────────────────────────────────────────────────────
+  const fields = { name: $('inp-name'), role: $('inp-role'), level: $('inp-level') };
+
+  function getProfile() {
+    return {
+      name: fields.name.value.trim(),
+      role: fields.role.value.trim(),
+      experience_level: fields.level.value,
+    };
+  }
+
+  function validateProfile() {
+    const p = getProfile();
+    let first = null;
+    const check = (ok, el) => { el.classList.toggle('invalid', !ok); if (!ok && !first) first = el; };
+    check(!!p.name, fields.name);
+    check(!!p.role, fields.role);
+    check(!!p.experience_level, fields.level);
+    if (first) {
+      first.focus();
+      return 'Please complete your name, target role and experience level in the sidebar.';
+    }
+    return null;
+  }
+
+  function updateProfileUI() {
+    const p = getProfile();
+    const ready = p.name && p.role && p.experience_level;
+    $('profile-status').textContent = ready ? 'Ready' : 'Incomplete';
+    $('profile-status').style.color = ready ? 'var(--green)' : 'var(--amber)';
+
+    $('stat-role').textContent = p.role || '—';
+    $('stat-level').textContent = p.experience_level || '—';
+
+    const tag = $('q-profile-tag');
+    if (tag) {
+      tag.textContent = ready ? `${p.name} · ${p.role} · ${p.experience_level}` : 'Complete profile in sidebar';
+      tag.className = ready ? 'tag ready' : 'tag';
+    }
+  }
+
+  function onProfileChange() {
+    Object.values(fields).forEach((el) => el.classList.remove('invalid'));
+    store.set('ita.profile', getProfile());
+    updateProfileUI();
+  }
+
+  function loadProfile() {
+    const p = store.get('ita.profile', { name: 'Sarah Jenkins', role: 'Full Stack Engineer', experience_level: 'Mid-Level' });
+    fields.name.value = p.name || '';
+    fields.role.value = p.role || '';
+    fields.level.value = p.experience_level || '';
+    updateProfileUI();
+  }
+
+  // ── Navigation ─────────────────────────────────────────────────────────────
+  function switchPanel(name, { updateHash = true } = {}) {
+    if (!PANELS.includes(name)) name = 'home';
+    PANELS.forEach((p) => {
+      const el = $('panel-' + p);
+      if (el) el.classList.toggle('active', p === name);
+    });
+    document.querySelectorAll('.nav-tab').forEach((t) => {
+      if (t.dataset.panel === name) t.setAttribute('aria-current', 'page');
+      else t.removeAttribute('aria-current');
+    });
+    if (updateHash) history.replaceState(null, '', '#' + name);
+    window.scrollTo({ top: 0 });
+
+    // Close mobile drawer if open
+    $('sidebar').classList.remove('open');
+
+    if (name === 'chat') $('chat-input').focus();
+    if (name === 'deck') renderDeck();
+    if (name === 'upload') loadKnowledgeBase();
+  }
+
+  // Mobile menu toggle
+  $('btn-toggle-menu').addEventListener('click', () => {
+    $('sidebar').classList.toggle('open');
+  });
+
+  // ── Question Set Generator ─────────────────────────────────────────────────
+  async function generateQuestions() {
+    const err = validateProfile();
+    if (err) return showAlert('q-alert', 'error', err);
+    hideAlert('q-alert');
+    const btn = $('btn-q');
+    setBusy(btn, true, 'Generating Questions...');
+
+    try {
+      const data = await api('/generate-questions', {
+        json: { ...getProfile(), background: $('q-background').value.trim() },
+      });
+      raw['q-response'] = data.response;
+      parseAndRenderQuestions(data.response);
+      renderSources('q-sources', data.sources);
+      $('q-result').hidden = false;
+      $('q-result').scrollIntoView({ behavior: 'smooth' });
+    } catch (e) {
+      showAlert('q-alert', 'error', e.message);
+    } finally {
+      setBusy(btn, false);
+    }
+  }
+
+  function parseAndRenderQuestions(text) {
+    generatedQuestionsList = [];
+    let currentCat = 'Technical';
+
+    text.split(/\r?\n/).forEach((line) => {
+      const trimmed = line.trim();
+      if (/##\s*Technical/i.test(trimmed)) currentCat = 'Technical';
+      else if (/##\s*Behavioral/i.test(trimmed)) currentCat = 'Behavioral';
+      else if (/##\s*HR/i.test(trimmed)) currentCat = 'HR';
+      else if (/##\s*Prep/i.test(trimmed)) currentCat = 'Strategy';
+
+      const m = trimmed.match(/^\d+[.)]\s+(.*)$/);
+      if (m && m[1]) {
+        generatedQuestionsList.push({
+          category: currentCat,
+          text: m[1].replace(/\*\*/g, '').trim(),
+        });
+      }
+    });
+
+    renderFilteredQuestions();
+  }
+
+  function renderFilteredQuestions() {
+    const container = $('q-interactive-container');
+    container.replaceChildren();
+
+    const filtered = generatedQuestionsList.filter((q) => {
+      if (currentFilter === 'all') return true;
+      return q.category.toLowerCase().includes(currentFilter.toLowerCase());
+    });
+
+    if (!filtered.length) {
+      container.innerHTML = '<p style="color:var(--text-muted);padding:1rem;">No items matching filter.</p>';
+      return;
+    }
+
+    filtered.forEach((q, idx) => {
+      const card = document.createElement('div');
+      card.className = 'q-card';
+
+      const top = document.createElement('div');
+      top.className = 'q-top';
+
+      const catBadge = document.createElement('span');
+      catBadge.className = `q-cat ${q.category.toLowerCase()}`;
+      catBadge.textContent = q.category;
+
+      const qNum = document.createElement('span');
+      qNum.style.fontSize = '0.75rem';
+      qNum.style.color = 'var(--text-muted)';
+      qNum.textContent = `#${idx + 1}`;
+
+      top.append(catBadge, qNum);
+
+      const qText = document.createElement('div');
+      qText.className = 'q-text';
+      qText.textContent = q.text;
+
+      const actions = document.createElement('div');
+      actions.className = 'q-actions';
+
+      if (q.category !== 'Strategy') {
+        const btnMock = document.createElement('button');
+        btnMock.className = 'btn btn-primary btn-sm';
+        btnMock.innerHTML = '🎙️ Practice in Mock';
+        btnMock.addEventListener('click', () => {
+          loadIntoMock(q.text);
+          switchPanel('mock');
+        });
+
+        const btnAns = document.createElement('button');
+        btnAns.className = 'btn btn-outline btn-sm';
+        btnAns.innerHTML = '💡 Model Answer';
+        btnAns.addEventListener('click', () => {
+          $('a-question').value = q.text;
+          switchPanel('answer');
+          getModelAnswer();
+        });
+
+        const btnSave = document.createElement('button');
+        btnSave.className = 'btn btn-ghost btn-sm';
+        const isSaved = savedDeck.some((item) => item.text === q.text);
+        btnSave.innerHTML = isSaved ? '✓ Bookmarked' : '🔖 Bookmark';
+        btnSave.addEventListener('click', () => {
+          toggleSaveDeck(q);
+          btnSave.innerHTML = savedDeck.some((item) => item.text === q.text) ? '✓ Bookmarked' : '🔖 Bookmark';
+        });
+
+        actions.append(btnMock, btnAns, btnSave);
+      }
+
+      card.append(top, qText, actions);
+      container.appendChild(card);
+    });
+  }
+
+  // Filter tabs click
+  $('q-filter-tabs').addEventListener('click', (e) => {
+    const btn = e.target.closest('.filter-btn');
+    if (!btn) return;
+    document.querySelectorAll('.filter-btn').forEach((b) => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.filter;
+    renderFilteredQuestions();
+  });
+
+  // ── Model Answer Generator ─────────────────────────────────────────────────
+  async function getModelAnswer() {
+    const err = validateProfile();
+    if (err) return showAlert('a-alert', 'error', err);
+    const question = $('a-question').value.trim();
+    if (!question) return showAlert('a-alert', 'error', 'Please enter an interview question first.');
+    hideAlert('a-alert');
+    const btn = $('btn-a');
+    setBusy(btn, true, 'Synthesizing Answer...');
+
+    try {
+      const data = await api('/model-answer', {
+        json: { ...getProfile(), question },
+      });
+      raw['a-response'] = data.response;
+      renderMarkdown($('a-response'), data.response);
+      renderSources('a-sources', data.sources);
+      $('a-result').hidden = false;
+      $('a-result').scrollIntoView({ behavior: 'smooth' });
+    } catch (e) {
+      showAlert('a-alert', 'error', e.message);
+    } finally {
+      setBusy(btn, false);
+    }
+  }
+
+  $('btn-tts-answer').addEventListener('click', () => {
+    if (raw['a-response']) speakText(raw['a-response']);
+  });
+
+  $('btn-test-in-mock').addEventListener('click', () => {
+    const q = $('a-question').value.trim();
+    if (q) {
+      loadIntoMock(q);
+      switchPanel('mock');
+    }
+  });
+
+  $('btn-a-sample1').addEventListener('click', () => {
+    $('a-question').value = 'Explain the difference between synchronous and asynchronous execution in JavaScript and how the event loop handles promises vs setTimeout.';
+    getModelAnswer();
+  });
+
+  $('btn-a-sample2').addEventListener('click', () => {
+    $('a-question').value = 'Describe a time you had a technical disagreement with a colleague or lead. How did you resolve it?';
+    getModelAnswer();
+  });
+
+  // ── Mock Interview Simulator ───────────────────────────────────────────────
+  function loadIntoMock(questionText) {
+    $('mock-q-input').value = questionText;
+    $('mock-displayed-q').textContent = questionText;
+    $('mock-answer-text').value = '';
+    $('mock-answer-text').dispatchEvent(new Event('input'));
+    $('mock-result-card').hidden = true;
+    resetTimer();
+    startTimer();
+  }
+
+  // Timer controls
+  function startTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    isTimerRunning = true;
+    $('btn-timer-toggle').textContent = 'Pause Timer';
+    timerInterval = setInterval(() => {
+      timerSeconds++;
+      const mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+      const secs = String(timerSeconds % 60).padStart(2, '0');
+      $('timer-display').textContent = `${mins}:${secs}`;
+    }, 1000);
+  }
+
+  function pauseTimer() {
+    if (isTimerRunning) {
+      clearInterval(timerInterval);
+      isTimerRunning = false;
+      $('btn-timer-toggle').textContent = 'Resume Timer';
+    } else {
+      startTimer();
+    }
+  }
+
+  function resetTimer() {
+    clearInterval(timerInterval);
+    timerSeconds = 0;
+    isTimerRunning = false;
+    $('timer-display').textContent = '00:00';
+    $('btn-timer-toggle').textContent = 'Start Timer';
+  }
+
+  $('btn-timer-toggle').addEventListener('click', pauseTimer);
+
+  // Word count update
+  $('mock-answer-text').addEventListener('input', (e) => {
+    const words = e.target.value.trim().split(/\s+/).filter(Boolean).length;
+    $('mock-word-count').textContent = `${words} words`;
+  });
+
+  // Speech Recognition for Mock
+  const mockRec = initSpeechRecognition($('mock-answer-text'), $('btn-mic-toggle'), $('mic-text'));
+  $('btn-mic-toggle').addEventListener('click', () => {
+    if (!mockRec) return alert('Speech-to-Text is not supported in this browser. Please use Google Chrome or Edge.');
+    if (isRecording) {
+      mockRec.stop();
+    } else {
+      mockRec.start();
+    }
+  });
+
+  // TTS Read Mock Q
+  $('btn-tts-mock-q').addEventListener('click', () => {
+    speakText($('mock-displayed-q').textContent);
+  });
+
+  // Submit Answer for AI Evaluation
+  async function evaluateMockAnswer() {
+    const err = validateProfile();
+    if (err) return showAlert('mock-alert', 'error', err);
+    const question = $('mock-displayed-q').textContent.trim();
+    const candidate_answer = $('mock-answer-text').value.trim();
+
+    if (candidate_answer.length < 15) {
+      return showAlert('mock-alert', 'error', 'Please provide a more complete answer (at least 15 characters) before evaluating.');
+    }
+    hideAlert('mock-alert');
+
+    pauseTimer(); // pause timer during evaluation
+    const btn = $('btn-eval-answer');
+    setBusy(btn, true, 'Evaluating Answer...');
+
+    try {
+      const data = await api('/evaluate-answer', {
+        json: { ...getProfile(), question, candidate_answer },
+      });
+      raw['mock-eval'] = data.response;
+
+      // Render score banner
+      const banner = $('mock-score-banner');
+      banner.replaceChildren();
+      if (data.score !== null && data.score !== undefined) {
+        const badge = document.createElement('div');
+        const sc = Number(data.score);
+        badge.className = `score-badge ${sc >= 8 ? 'high' : sc >= 6 ? 'mid' : 'low'}`;
+        badge.textContent = `★ Score: ${sc} / 10`;
+        banner.appendChild(badge);
+      }
+
+      renderMarkdown($('mock-eval-response'), data.response);
+      $('mock-result-card').hidden = false;
+      $('mock-result-card').scrollIntoView({ behavior: 'smooth' });
+    } catch (e) {
+      showAlert('mock-alert', 'error', e.message);
+    } finally {
+      setBusy(btn, false);
+    }
+  }
+
+  $('btn-eval-answer').addEventListener('click', evaluateMockAnswer);
+
+  $('btn-mock-random').addEventListener('click', () => {
+    const pool = [
+      'Explain the architectural differences between monolithic and microservices architectures.',
+      'Describe a time you had to deliver a critical project under an unrealistic deadline.',
+      'How do you design database schema and caching layers to handle 10,000 concurrent writes per second?',
+      'Tell me about a time you gave constructive criticism to a teammate and how they received it.',
+      'Walk me through your thought process when a high-severity alert sounds in production.',
+    ];
+    const picked = pool[Math.floor(Math.random() * pool.length)];
+    loadIntoMock(picked);
+  });
+
+  $('btn-mock-from-gen').addEventListener('click', () => {
+    if (!generatedQuestionsList.length) {
+      alert('Please generate a Question Set first under the Question Set tab!');
+      switchPanel('questions');
+      return;
+    }
+    const nonStrategy = generatedQuestionsList.filter((q) => q.category !== 'Strategy');
+    const picked = nonStrategy[Math.floor(Math.random() * nonStrategy.length)];
+    loadIntoMock(picked.text);
+  });
+
+  $('btn-save-mock-q').addEventListener('click', () => {
+    const qText = $('mock-displayed-q').textContent;
+    toggleSaveDeck({ category: 'Mock Question', text: qText });
+    alert('Question added to your Saved Study Deck!');
+  });
+
+  // ── STAR Story Builder ─────────────────────────────────────────────────────
+  async function runStarCritique() {
+    const err = validateProfile();
+    if (err) return showAlert('star-alert', 'error', err);
+
+    const s = $('star-s').value.trim();
+    const t = $('star-t').value.trim();
+    const a = $('star-a').value.trim();
+    const r = $('star-r').value.trim();
+
+    if (!s || !t || !a || !r) {
+      return showAlert('star-alert', 'error', 'Please fill in all 4 STAR sections (Situation, Task, Action, Result).');
+    }
+    hideAlert('star-alert');
+
+    const btn = $('btn-star-critique');
+    setBusy(btn, true, 'Critiquing Story...');
+
+    try {
+      const p = getProfile();
+      const data = await api('/star-critique', {
+        json: {
+          role: p.role,
+          experience_level: p.experience_level,
+          situation: s,
+          task: t,
+          action: a,
+          result: r,
+        },
+      });
+      raw['star-response'] = data.response;
+      renderMarkdown($('star-response'), data.response);
+      $('star-result').hidden = false;
+      $('star-result').scrollIntoView({ behavior: 'smooth' });
+    } catch (e) {
+      showAlert('star-alert', 'error', e.message);
+    } finally {
+      setBusy(btn, false);
+    }
+  }
+
+  $('btn-star-critique').addEventListener('click', runStarCritique);
+
+  $('btn-star-sample').addEventListener('click', () => {
+    $('star-s').value = 'During our annual holiday shopping campaign, checkout latency spiked from 200ms to 4.2s, causing cart abandonment to surge by 30%.';
+    $('star-t').value = 'As lead backend engineer, my responsibility was to diagnose the root cause immediately and restore sub-300ms latency without database downtime.';
+    $('star-a').value = 'I profiled real-time APM traces, uncovered redundant unindexed queries on the cart session table, implemented a Redis write-through cache, and optimized PostgreSQL indexes.';
+    $('star-r').value = 'Checkout latency dropped to 110ms, checkout conversions recovered by 100%, and we successfully handled $1.2M in sales with zero drops.';
+    runStarCritique();
+  });
+
+  $('btn-tts-star').addEventListener('click', () => {
+    if (raw['star-response']) speakText(raw['star-response']);
+  });
+
+  // ── Resume Analysis ────────────────────────────────────────────────────────
+  async function analyzeResume() {
+    const err = validateProfile();
+    if (err) return showAlert('r-alert', 'error', err);
+    const resume_text = $('r-resume').value.trim();
+    if (resume_text.length < 50) return showAlert('r-alert', 'error', 'Add at least 50 characters of resume text.');
+    hideAlert('r-alert');
+
+    const btn = $('btn-r');
+    setBusy(btn, true, 'Analyzing Resume...');
+
+    try {
+      const data = await api('/analyze-resume', {
+        json: { ...getProfile(), resume_text },
+      });
+      raw['r-response'] = data.response;
+      renderMarkdown($('r-response'), data.response);
+      renderSources('r-sources', data.sources);
+      $('r-result').hidden = false;
+      $('r-result').scrollIntoView({ behavior: 'smooth' });
+    } catch (e) {
+      showAlert('r-alert', 'error', e.message);
+    } finally {
+      setBusy(btn, false);
+    }
+  }
+
+  $('btn-r').addEventListener('click', analyzeResume);
+
+  $('r-resume').addEventListener('input', (e) => {
+    const n = e.target.value.trim().length;
+    $('r-count').textContent = `${n} characters (min 50)`;
+  });
+
+  // Resume File Upload & Parse
+  const resumeDz = $('resume-dropzone');
+  const resumeInput = $('resume-file-input');
+  resumeDz.addEventListener('click', () => resumeInput.click());
+  resumeDz.addEventListener('dragover', (e) => { e.preventDefault(); resumeDz.classList.add('drag'); });
+  resumeDz.addEventListener('dragleave', () => resumeDz.classList.remove('drag'));
+  resumeDz.addEventListener('drop', (e) => {
+    e.preventDefault();
+    resumeDz.classList.remove('drag');
+    parseResumeFile(e.dataTransfer.files[0]);
+  });
+  resumeInput.addEventListener('change', () => parseResumeFile(resumeInput.files[0]));
+
+  async function parseResumeFile(file) {
+    if (!file) return;
+    showAlert('r-alert', 'info', `Extracting text from ${file.name}...`);
+    const form = new FormData();
+    form.append('file', file);
+    try {
+      const data = await api('/parse-resume-file', { form });
+      $('r-resume').value = data.text;
+      $('r-resume').dispatchEvent(new Event('input'));
+      showAlert('r-alert', 'success', `Successfully extracted ${data.character_count} characters from ${data.filename}! Ready to analyze.`);
+    } catch (e) {
+      showAlert('r-alert', 'error', e.message);
+    } finally {
+      resumeInput.value = '';
+    }
+  }
+
+  // ── Conversational Chat Coach ──────────────────────────────────────────────
+  function chatLog() { return $('chat-log'); }
+  function scrollChat() { const log = chatLog(); log.scrollTop = log.scrollHeight; }
+
+  function addChatMessage(role, content, { error = false } = {}) {
+    const log = chatLog();
+    const div = document.createElement('div');
+    div.className = `msg ${role}${error ? ' error' : ''}`;
+
+    if (role === 'assistant') {
+      const who = document.createElement('div');
+      who.className = 'who';
+      who.innerHTML = `<span>AI Interview Coach</span>`;
+
+      const btnTts = document.createElement('button');
+      btnTts.className = 'btn btn-ghost btn-xs';
+      btnTts.style.padding = '0 4px';
+      btnTts.textContent = '🔊';
+      btnTts.title = 'Listen';
+      btnTts.addEventListener('click', () => speakText(content));
+      who.appendChild(btnTts);
+
+      const body = document.createElement('div');
+      body.className = 'body';
+      renderMarkdown(body, content);
+      div.append(who, body);
+    } else {
+      div.textContent = content;
+    }
+
+    log.appendChild(div);
+    scrollChat();
+    return div;
+  }
+
+  function showTyping() {
+    const div = document.createElement('div');
+    div.className = 'msg assistant';
+    div.innerHTML = '<div class="who">AI Interview Coach</div><div class="body"><span class="spinner" style="width:12px;height:12px;"></span> Coach is writing...</div>';
+    chatLog().appendChild(div);
+    scrollChat();
+    return div;
+  }
+
+  async function sendChat(customMsg) {
+    const input = $('chat-input');
+    const msg = (typeof customMsg === 'string' ? customMsg : input.value).trim();
+    if (!msg) return;
+
+    input.value = '';
+    input.style.height = 'auto';
+
+    addChatMessage('user', msg);
+    const typing = showTyping();
+
+    try {
+      const data = await api('/chat', {
+        json: {
+          ...getProfile(),
+          message: msg,
+          history: chatHistory.slice(-10),
+        },
+      });
+      typing.remove();
+      addChatMessage('assistant', data.response);
+      chatHistory.push({ role: 'user', content: msg }, { role: 'assistant', content: data.response });
+      store.set('ita.chat', chatHistory);
+    } catch (e) {
+      typing.remove();
+      addChatMessage('assistant', e.message, { error: true });
+    }
+  }
+
+  $('chat-send').addEventListener('click', () => sendChat());
+  $('chat-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendChat();
+    }
+  });
+
+  // Chat Voice Input
+  const chatRec = initSpeechRecognition($('chat-input'), $('btn-chat-mic'), null);
+  $('btn-chat-mic').addEventListener('click', () => {
+    if (!chatRec) return alert('Speech recognition not supported in this browser.');
+    if (isRecording) chatRec.stop();
+    else chatRec.start();
+  });
+
+  $('btn-clear-chat').addEventListener('click', () => {
+    chatHistory = [];
+    store.set('ita.chat', []);
+    chatLog().replaceChildren();
+    addChatMessage('assistant', 'Chat cleared. Ask me any interview question, salary advice, or request a mock roleplay!');
+  });
+
+  $('btn-export-chat').addEventListener('click', () => {
+    if (!chatHistory.length) return alert('No chat messages to export.');
+    const txt = chatHistory.map((m) => `${m.role.toUpperCase()}:\n${m.content}\n`).join('\n---\n\n');
+    downloadText(txt, 'interview-chat-transcript.txt');
+  });
+
+  // ── Study Deck / Bookmarks ─────────────────────────────────────────────────
+  function toggleSaveDeck(q) {
+    const idx = savedDeck.findIndex((item) => item.text === q.text);
+    if (idx >= 0) {
+      savedDeck.splice(idx, 1);
+    } else {
+      savedDeck.push(q);
+    }
+    store.set('ita.deck', savedDeck);
+    updateDeckUI();
+  }
+
+  function updateDeckUI() {
+    $('deck-count-badge').textContent = savedDeck.length;
+    $('stat-saved').textContent = savedDeck.length;
+  }
+
+  function renderDeck() {
+    const container = $('deck-container');
+    container.replaceChildren();
+
+    if (!savedDeck.length) {
+      container.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted);"><p>No saved questions in your study deck yet.</p><p style="font-size:0.8rem;margin-top:4px;">Click "🔖 Bookmark" on any question to add it here for quick review.</p></div>';
+      return;
+    }
+
+    savedDeck.forEach((item, idx) => {
+      const card = document.createElement('div');
+      card.className = 'q-card';
+
+      const top = document.createElement('div');
+      top.className = 'q-top';
+      top.innerHTML = `<span class="q-cat">${item.category || 'Interview'}</span><span style="font-size:0.75rem;color:var(--text-muted);">Card #${idx + 1}</span>`;
+
+      const text = document.createElement('div');
+      text.className = 'q-text';
+      text.textContent = item.text;
+
+      const actions = document.createElement('div');
+      actions.className = 'q-actions';
+
+      const btnMock = document.createElement('button');
+      btnMock.className = 'btn btn-primary btn-sm';
+      btnMock.textContent = '🎙️ Practice Now';
+      btnMock.addEventListener('click', () => {
+        loadIntoMock(item.text);
+        switchPanel('mock');
+      });
+
+      const btnAns = document.createElement('button');
+      btnAns.className = 'btn btn-outline btn-sm';
+      btnAns.textContent = '💡 View Answer';
+      btnAns.addEventListener('click', () => {
+        $('a-question').value = item.text;
+        switchPanel('answer');
+        getModelAnswer();
+      });
+
+      const btnDel = document.createElement('button');
+      btnDel.className = 'btn btn-ghost btn-sm';
+      btnDel.textContent = 'Remove';
+      btnDel.addEventListener('click', () => {
+        savedDeck.splice(idx, 1);
+        store.set('ita.deck', savedDeck);
+        updateDeckUI();
+        renderDeck();
+      });
+
+      actions.append(btnMock, btnAns, btnDel);
+      card.append(top, text, actions);
+      container.appendChild(card);
+    });
+  }
+
+  $('btn-clear-deck').addEventListener('click', () => {
+    if (confirm('Clear all questions from your study deck?')) {
+      savedDeck = [];
+      store.set('ita.deck', savedDeck);
+      updateDeckUI();
+      renderDeck();
+    }
+  });
+
+  $('btn-export-deck').addEventListener('click', () => {
+    if (!savedDeck.length) return alert('Your study deck is empty.');
+    const text = savedDeck.map((item, i) => `${i + 1}. [${item.category}] ${item.text}`).join('\n\n');
+    downloadText(text, 'interview-study-deck.txt');
+  });
+
+  // ── Knowledge Base Management & Search ─────────────────────────────────────
+  async function loadKnowledgeBase() {
+    try {
+      const data = await api('/knowledge-base', { method: 'GET' });
+      $('stat-docs').textContent = data.total_documents;
+
+      const container = $('kb-table-container');
+      if (!data.documents || !data.documents.length) {
+        container.innerHTML = '<p style="color:var(--text-muted);">No documents loaded.</p>';
+        return;
+      }
+
+      let html = `<table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+        <thead><tr style="border-bottom:1px solid var(--border);text-align:left;color:var(--text-muted);">
+          <th style="padding:8px;">File Name</th>
+          <th style="padding:8px;">Format</th>
+          <th style="padding:8px;">Size</th>
+          <th style="padding:8px;">Indexed Chunks</th>
+        </tr></thead><tbody>`;
+
+      data.documents.forEach((d) => {
+        html += `<tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:8px;font-weight:600;">${d.name}</td>
+          <td style="padding:8px;"><span class="chip">${d.type}</span></td>
+          <td style="padding:8px;">${Math.round(d.size_bytes / 1024)} KB</td>
+          <td style="padding:8px;"><span class="tag ready">${d.chunks_count} chunks</span></td>
+        </tr>`;
+      });
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    } catch (e) {
+      console.warn('Could not load KB stats:', e);
+    }
+  }
+
+  // Upload file
+  const dz = $('dropzone');
+  const fileInput = $('file-input');
+  dz.addEventListener('click', () => fileInput.click());
+  dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('drag'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+  dz.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dz.classList.remove('drag');
+    uploadDocument(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', () => uploadDocument(fileInput.files[0]));
+
+  async function uploadDocument(file) {
+    if (!file) return;
+    showAlert('upload-alert', 'info', `Uploading ${file.name}...`);
+    const form = new FormData();
+    form.append('file', file);
+    try {
+      const data = await api('/ingest/upload', { form });
+      showAlert('upload-alert', 'success', data.detail);
+      setTimeout(loadKnowledgeBase, 2000);
+    } catch (e) {
+      showAlert('upload-alert', 'error', e.message);
+    } finally {
+      fileInput.value = '';
+    }
+  }
+
+  // Rebuild Index
+  $('btn-rebuild').addEventListener('click', async () => {
+    const btn = $('btn-rebuild');
+    setBusy(btn, true, 'Rebuilding...');
+    hideAlert('rebuild-alert');
+    try {
+      const data = await api('/ingest/rebuild');
+      showAlert('rebuild-alert', 'success', data.detail);
+      loadKnowledgeBase();
+    } catch (e) {
+      showAlert('rebuild-alert', 'error', e.message);
+    } finally {
+      setBusy(btn, false);
+    }
+  });
+
+  // Interactive RAG Search Tester
+  $('btn-kb-search').addEventListener('click', async () => {
+    const query = $('kb-search-input').value.trim();
+    if (!query) return;
+    const btn = $('btn-kb-search');
+    setBusy(btn, true, 'Searching...');
+    const container = $('kb-search-results');
+    container.innerHTML = '<span class="spinner"></span> Searching knowledge base...';
+
+    try {
+      const data = await api('/knowledge-base/search', { json: { query, top_k: 4 } });
+      container.replaceChildren();
+
+      if (!data.results || !data.results.length) {
+        container.innerHTML = '<p style="color:var(--text-muted);padding:0.5rem;">No matching chunks found.</p>';
+        return;
+      }
+
+      data.results.forEach((r, idx) => {
+        const div = document.createElement('div');
+        div.style.background = 'var(--surface-2)';
+        div.style.border = '1px solid var(--border)';
+        div.style.borderRadius = 'var(--radius-sm)';
+        div.style.padding = '0.75rem';
+        div.style.marginBottom = '0.5rem';
+        div.style.fontSize = '0.85rem';
+
+        const head = document.createElement('div');
+        head.style.display = 'flex';
+        head.style.justifyContent = 'space-between';
+        head.style.marginBottom = '4px';
+        head.innerHTML = `<strong style="color:var(--blue);">Chunk #${idx + 1} (${r.source})</strong>`;
+
+        const body = document.createElement('div');
+        body.textContent = r.excerpt;
+
+        div.append(head, body);
+        container.appendChild(div);
+      });
+    } catch (e) {
+      container.innerHTML = `<span style="color:var(--red);">${e.message}</span>`;
+    } finally {
+      setBusy(btn, false);
+    }
+  });
+
+  // ── Engine Status ──────────────────────────────────────────────────────────
+  async function checkHealth() {
+    try {
+      const data = await api('/health', { method: 'GET', timeout: 5000 });
+      const dot = $('conn-dot');
+      if (data.is_live_watsonx) {
+        dot.className = 'dot live';
+        $('conn-text').textContent = 'IBM Granite (Live)';
+      } else {
+        dot.className = 'dot sim';
+        $('conn-text').textContent = 'RAG Simulation Engine';
+      }
+    } catch {
+      $('conn-dot').className = 'dot offline';
+      $('conn-text').textContent = 'Server Offline';
+    }
+  }
+
+  // ── Copy & Download Utilities ──────────────────────────────────────────────
+  async function copyText(text) {
+    try { await navigator.clipboard.writeText(text); return true; }
+    catch {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand('copy');
+      ta.remove();
+      return ok;
+    }
+  }
+
+  function downloadText(text, filename) {
+    const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  $('btn-copy-q').addEventListener('click', async () => {
+    const ok = await copyText(raw['q-response'] || '');
+    $('btn-copy-q').textContent = ok ? 'Copied!' : 'Failed';
+    setTimeout(() => { $('btn-copy-q').textContent = 'Copy All'; }, 1500);
+  });
+  $('btn-download-q').addEventListener('click', () => downloadText(raw['q-response'] || '', 'question-set.txt'));
+
+  $('btn-copy-a').addEventListener('click', async () => {
+    const ok = await copyText(raw['a-response'] || '');
+    $('btn-copy-a').textContent = ok ? 'Copied!' : 'Failed';
+    setTimeout(() => { $('btn-copy-a').textContent = 'Copy'; }, 1500);
+  });
+  $('btn-download-a').addEventListener('click', () => downloadText(raw['a-response'] || '', 'model-answer.txt'));
+
+  $('btn-copy-mock-eval').addEventListener('click', async () => {
+    const ok = await copyText(raw['mock-eval'] || '');
+    $('btn-copy-mock-eval').textContent = ok ? 'Copied!' : 'Failed';
+    setTimeout(() => { $('btn-copy-mock-eval').textContent = 'Copy Feedback'; }, 1500);
+  });
+
+  $('btn-copy-star').addEventListener('click', async () => {
+    const ok = await copyText(raw['star-response'] || '');
+    $('btn-copy-star').textContent = ok ? 'Copied!' : 'Failed';
+    setTimeout(() => { $('btn-copy-star').textContent = 'Copy Polished Story'; }, 1500);
+  });
+
+  $('btn-copy-r').addEventListener('click', async () => {
+    const ok = await copyText(raw['r-response'] || '');
+    $('btn-copy-r').textContent = ok ? 'Copied!' : 'Failed';
+    setTimeout(() => { $('btn-copy-r').textContent = 'Copy'; }, 1500);
+  });
+  $('btn-download-r').addEventListener('click', () => downloadText(raw['r-response'] || '', 'resume-analysis.txt'));
+
+  // ── Wiring & Event Listeners ───────────────────────────────────────────────
+  document.querySelectorAll('.nav-tab').forEach((t) => t.addEventListener('click', () => switchPanel(t.dataset.panel)));
+  document.querySelectorAll('[data-go]').forEach((t) => t.addEventListener('click', () => switchPanel(t.dataset.go)));
+  window.addEventListener('hashchange', () => switchPanel(location.hash.slice(1), { updateHash: false }));
+
+  Object.values(fields).forEach((el) => el.addEventListener('input', onProfileChange));
+  fields.level.addEventListener('change', onProfileChange);
+
+  $('btn-q').addEventListener('click', generateQuestions);
+  $('btn-a').addEventListener('click', getModelAnswer);
+
+  // ── Initialization ─────────────────────────────────────────────────────────
+  initTheme();
+  loadProfile();
+  updateDeckUI();
+  if (chatHistory.length) {
+    chatHistory.forEach((m) => addChatMessage(m.role, m.content));
+  } else {
+    addChatMessage('assistant', 'Welcome! I am your AI Interview Coach powered by IBM Granite and RAG. Fill in your profile on the left, then ask me anything or practice questions!');
+  }
+  switchPanel(location.hash.slice(1) || 'home', { updateHash: false });
+  checkHealth();
+  loadKnowledgeBase();
+  setInterval(checkHealth, 45000);
+})();
+</script>
+</body>
+</html>
